@@ -10,7 +10,17 @@
   "license": "ISC",
   "dependencies": {
     "@aws-sdk/client-ecs": "^3.645.0",
+    "@prisma/client": "^5.19.1",
     "express": "^4.19.2",
-    "random-word-slugs": "^0.1.7"
+    "ioredis": "^5.4.1",
+    "random-word-slugs": "^0.1.7",
+    "socket.io": "^4.7.5",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.5.4",
+    "prisma": "^5.19.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.4"
   }
 }

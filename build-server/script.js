@@ -3,22 +3,35 @@ const path = require('path');
 const fs = require('fs');
 const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
 const mime = require('mime-types');
+const dotenv = require('dotenv');
+const Redis = require('ioredis');
 
+dotnev.config();
+
+
+const publisher = new Redis(process.env.REDIS_URL);
+
+function publishLog(log) {
+    publisher.publish(`logs:${PROJECT_ID}`, JSON.stringify({ log }));
+}
 
 
 const s3Client = new S3Client({
     region: 'ap-south-1',
     credentials: {
-        accessKeyId: 'AKIA5FCD57QB7VGGVCBC',
-        secretAccessKey: '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'
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
     }
 });
 
 const PROJECT_ID = process.env.PROJECT_ID;
 
 
+
 async function init() {
     console.log("Executing script.js");
+    publishLog('Build Started...');
+
 
     const outDirPath = path.join(__dirname, 'output');
 
@@ -26,14 +39,20 @@ async function init() {
 
     p.stdout.on('data', function (data) {
         console.log(data.toString());
+        publishLog(data.toString());
+
     });
 
     p.stdout.on('error', function (data) {
         console.log('Error', data.toString());
+        publishLog(`error: ${data.toString()}`);
+
     });
 
     p.on('close', async function () {
         console.log("build completed");
+        publishLog(`Build Complete`);
+
 
 
         const distFolderPath = path.join(__dirname, 'output', 'dist');
@@ -48,6 +67,8 @@ async function init() {
             if (fs.lstatSync(filePath).isDirectory()) continue;
 
             console.log('uploading', filePath);
+            publishLog(`uploading ${file}`);
+
 
             const command = new PutObjectCommand({
                 Bucket: 'vercel-imcaffiene',
@@ -57,11 +78,16 @@ async function init() {
             });
 
             await s3Client.send(command);
+            publishLog(`uploaded ${file}`);
+
             console.log('uploaded', filePath);
 
         }
+        publishLog(`Done`);
 
         console.log('Done...');
+        process.exit(0);
+
 
     });
 }
